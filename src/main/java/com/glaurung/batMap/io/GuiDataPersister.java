@@ -19,12 +19,9 @@ public class GuiDataPersister {
 
     public static void save( String baseDir, Point location, Dimension size ) {
         GuiData data = new GuiData( location, size );
-        FileOutputStream fileOutputStream;
-        try {
-            fileOutputStream = new FileOutputStream( getFile( baseDir ) );
-            ObjectOutputStream objectOutputStream = new ObjectOutputStream( fileOutputStream );
+        try (FileOutputStream fileOutputStream = new FileOutputStream( getFile( baseDir ) );
+             ObjectOutputStream objectOutputStream = new ObjectOutputStream( fileOutputStream )) {
             objectOutputStream.writeObject( data );
-            fileOutputStream.close();
         } catch (IOException e) {
             System.out.println( e );
         }
