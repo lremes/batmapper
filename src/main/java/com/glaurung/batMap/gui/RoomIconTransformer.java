@@ -4,6 +4,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Set;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -16,6 +18,16 @@ public class RoomIconTransformer implements Transformer<Room, Icon> {
 
     private final int WIDTH= 90;
     private final int HEIGHT = 90;
+    // icons are requested for every visible room on every repaint, so rooms that look the same share one cached icon
+    private static final int MAX_CACHED_ICONS = 1000;
+    private static final String[] EXIT_KEYS = { "n", "ne", "e", "se", "s", "sw", "w", "nw", "u", "d", "special" };
+
+    private final Map<String, Icon> iconCache = new LinkedHashMap<String, Icon>( 16, 0.75f, true ) {
+        @Override
+        protected boolean removeEldestEntry( Map.Entry<String, Icon> eldest ) {
+            return size() > MAX_CACHED_ICONS;
+        }
+    };
 
     public RoomIconTransformer() {
     }
@@ -23,7 +35,30 @@ public class RoomIconTransformer implements Transformer<Room, Icon> {
 
     @Override
     public Icon transform( Room room ) {
-        return new ImageIcon(drawRoom(room));
+        HashMap<String, Boolean> exitsMap = getExitsMap( room.getExits() );
+        String key = getCacheKey( room, exitsMap );
+        Icon icon = iconCache.get( key );
+        if (icon == null) {
+            icon = new ImageIcon( drawRoom( room, exitsMap ) );
+            iconCache.put( key, icon );
+        }
+        return icon;
+    }
+
+
+    private String getCacheKey( Room room, HashMap<String, Boolean> exitsMap ) {
+        StringBuilder key = new StringBuilder();
+        key.append( room.isIndoors() ).append( ';' )
+           .append( room.allExitsHaveBeenUSed() ).append( ';' )
+           .append( room.getColor() == null ? "none" : room.getColor().getRGB() ).append( ';' )
+           .append( room.isPicked() ).append( ';' )
+           .append( room.isCurrent() ).append( ';' );
+        for (String exit : EXIT_KEYS) {
+            if (exitsMap.get( exit )) {
+                key.append( exit ).append( ',' );
+            }
+        }
+        return key.toString();
     }
 
 
@@ -71,7 +106,7 @@ public class RoomIconTransformer implements Transformer<Room, Icon> {
     }
 
 
-    private BufferedImage drawRoom(Room room ){
+    private BufferedImage drawRoom(Room room, HashMap<String, Boolean> exitsMap ){
         BufferedImage newgfx = new BufferedImage(90, 90, BufferedImage.TYPE_INT_RGB);
         Graphics2D g = newgfx.createGraphics();
         g.setColor(RoomColors.OUTDOOR);
@@ -93,7 +128,6 @@ public class RoomIconTransformer implements Transformer<Room, Icon> {
 
         g.fillRect(newgfx.getMinX(), newgfx.getMinY(), newgfx.getWidth(), newgfx.getHeight());
 
-        HashMap<String, Boolean> exitsMap = getExitsMap(room.getExits());
         g.setStroke(new BasicStroke(5));
         g.setColor(exitColor);
 
