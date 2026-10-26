@@ -129,11 +129,9 @@ public class AreaDataPersister {
         List<File> oldDirFiles = listFiles( oldDir );
 
         try {
-            if (oldDirFiles.size() == 0) {
-                Files.deleteIfExists( oldDir.toPath() );
-                return;
+            if (oldDirFiles.size() > 0) {
+                Files.createDirectories( newDir.toPath() );
             }
-            Files.createDirectories( newDir.toPath() );
             for (File mapfile : oldDirFiles) {
                 // never overwrite a map that already exists in the new location
                 File target = new File( newDir, mapfile.getName() );
@@ -141,16 +139,18 @@ public class AreaDataPersister {
                     Files.move( mapfile.toPath(), target.toPath() );
                 }
             }
-            //all files moved to new place now, can safely delete old directory
-            if (listFiles( oldDir ).size() == 0) {
-                Files.deleteIfExists( oldDir.toPath() );
-            }
-
         } catch (IOException e) {
             e.printStackTrace();
         }
+        // only remove the old directory once everything in it has been moved
+        deleteIfEmpty( oldDir );
+    }
 
-
+    private static void deleteIfEmpty( File dir ) {
+        String[] contents = dir.list();
+        if (contents != null && contents.length == 0) {
+            dir.delete();
+        }
     }
 
     private static List<File> listFiles( File dir ) {

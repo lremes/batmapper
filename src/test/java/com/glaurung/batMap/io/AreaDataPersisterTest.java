@@ -4,8 +4,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
@@ -93,6 +95,25 @@ public class AreaDataPersisterTest {
 
         assertFalse( oldDir.exists() );
         assertFalse( newDir.exists() );
+    }
+
+    @Test
+    public void migrationKeepsOldDirectoryWithSubfoldersQuietly() throws IOException {
+        File subfolder = new File( oldDir, "subfolder" );
+        write( subfolder, "kept.txt", "keep me" );
+        write( oldDir, "a.batmap", "map a" );
+        PrintStream originalErr = System.err;
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+        System.setErr( new PrintStream( err, true ) );
+        try {
+            AreaDataPersister.migrateFiles( oldDir, newDir );
+        } finally {
+            System.setErr( originalErr );
+        }
+
+        assertEquals( "", err.toString() );
+        assertEquals( "map a", read( new File( newDir, "a.batmap" ) ) );
+        assertEquals( "keep me", read( new File( subfolder, "kept.txt" ) ) );
     }
 
     @Test
