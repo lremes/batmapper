@@ -38,6 +38,10 @@ public class ExitPaintTransformer implements Transformer<Exit, Paint> {
         Pair<Room> pair = layout.getGraph().getEndpoints( exit );
         Room begin = pair.getFirst();
         Room end = pair.getSecond();
+        // gradient between two equal colors looks the same as a solid color, but is much slower to fill
+        if (getColorFor( begin ).equals( getColorFor( end ) )) {
+            return getColorFor( begin );
+        }
         Point2D beginPoint = transformer.transform( layout.transform( begin ) );
         Point2D endPoint = transformer.transform( layout.transform( end ) );
         float xFirst = (float) beginPoint.getX();

@@ -38,7 +38,6 @@ import edu.uci.ics.jung.visualization.control.PluggableGraphMouse;
 import edu.uci.ics.jung.visualization.control.ScalingGraphMousePlugin;
 import edu.uci.ics.jung.visualization.control.TranslatingGraphMousePlugin;
 import edu.uci.ics.jung.visualization.decorators.EdgeShape;
-import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import edu.uci.ics.jung.visualization.picking.PickedState;
 import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 
@@ -90,13 +89,13 @@ public class MapperEngine implements ItemListener, ComponentListener {
         vv.setPreferredSize( new Dimension( 500, 500 ) ); //????
         RenderContext<Room, Exit> rc = vv.getRenderContext();
 
-        rc.setEdgeLabelTransformer( new ToStringLabeller<Exit>() );
+        rc.setEdgeLabelTransformer( new ExitLabeller( vv ) );
         rc.setEdgeLabelRenderer( new ExitLabelRenderer() );
         rc.setEdgeShapeTransformer( new EdgeShape.QuadCurve<Room, Exit>() );
         rc.setEdgeShapeTransformer( new EdgeShape.Wedge<Room, Exit>( 30 ) );
         rc.setEdgeFillPaintTransformer( new ExitPaintTransformer( vv ) );
 
-        rc.setVertexShapeTransformer( new RoomShape( graph ) );
+        rc.setVertexShapeTransformer( new RoomShape() );
         rc.setVertexIconTransformer( new RoomIconTransformer() );
 
         vv.getRenderContext().setLabelOffset( 5 );

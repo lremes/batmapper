@@ -1,30 +1,19 @@
 package com.glaurung.batMap.gui;
 
 import java.awt.Shape;
-import java.awt.geom.Area;
+import java.awt.geom.Rectangle2D;
 
 import org.apache.commons.collections15.Transformer;
 
-import com.glaurung.batMap.vo.Exit;
 import com.glaurung.batMap.vo.Room;
 
-import edu.uci.ics.jung.graph.SparseMultigraph;
-import edu.uci.ics.jung.visualization.decorators.AbstractVertexShapeTransformer;
+public class RoomShape implements Transformer<Room, Shape> {
 
-public class RoomShape extends AbstractVertexShapeTransformer<Room> implements Transformer<Room, Shape> {
-
-    public RoomShape( SparseMultigraph<Room, Exit> graph ) {
-    }
+    // every room is the same size, and jung asks for the shape many times per repaint, so build it only once
+    private final Shape roomGfx = new Rectangle2D.Float( - DrawingUtils.ROOM_SIZE / 2f, - DrawingUtils.ROOM_SIZE / 2f,
+                                                          DrawingUtils.ROOM_SIZE, DrawingUtils.ROOM_SIZE );
 
     public Shape transform( Room room ) {
-
-        setSizeTransformer( new Transformer<Room, Integer>() {
-            public Integer transform( Room room ) {
-                return DrawingUtils.ROOM_SIZE;
-            }
-        } );
-
-        Area roomGfx = new Area( factory.getRectangle( room ) );
         return roomGfx;
     }
 
