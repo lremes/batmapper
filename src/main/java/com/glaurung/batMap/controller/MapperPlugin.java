@@ -145,6 +145,7 @@ public class MapperPlugin extends BatClientPlugin implements BatClientPluginTrig
 
     @Override
     public void clientExit() {
+        this.engine.flushGuiData();
         this.engine.save();
 
     }

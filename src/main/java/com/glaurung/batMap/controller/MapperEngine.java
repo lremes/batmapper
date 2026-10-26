@@ -522,6 +522,17 @@ public class MapperEngine implements ItemListener, ComponentListener {
     }
 
 
+    /**
+     * Saves a window move/resize that is still waiting for its timer, so it isn't lost when the client exits.
+     */
+    public void flushGuiData() {
+        if (guiSaveTimer.isRunning()) {
+            guiSaveTimer.stop();
+            saveWindowGuiData();
+        }
+    }
+
+
     private void saveWindowGuiData() {
         if (this.batWindow != null) {
             GuiDataPersister.save( this.baseDir, this.batWindow.getLocation(), this.batWindow.getSize() );
