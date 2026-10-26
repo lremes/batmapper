@@ -4,7 +4,7 @@
 
     <groupId>com.glaurung</groupId>
     <artifactId>batUtils</artifactId>
-    <version>1.6.3</version>
+    <version>1.6.4</version>
     <packaging>jar</packaging>
 
     <name>batUtils</name>
@@ -38,6 +38,13 @@
             <groupId>net.sf.jung</groupId>
             <artifactId>jung-algorithms</artifactId>
             <version>2.0.1</version>
+            <exclusions>
+                <!-- only jung's matrix and scoring code uses colt, batmap never reaches it -->
+                <exclusion>
+                    <groupId>colt</groupId>
+                    <artifactId>colt</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -50,12 +57,6 @@
             <groupId>bat</groupId>
             <artifactId>bat_interfaces</artifactId>
             <version>1</version>
-        </dependency>
-
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.7</version>
         </dependency>
 
 
