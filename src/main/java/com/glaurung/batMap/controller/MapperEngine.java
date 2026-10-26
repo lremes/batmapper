@@ -3,6 +3,8 @@ package com.glaurung.batMap.controller;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.ItemEvent;
@@ -11,6 +13,8 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.util.*;
+
+import javax.swing.Timer;
 
 import com.glaurung.batMap.gui.*;
 import com.glaurung.batMap.gui.corpses.CorpsePanel;
@@ -58,6 +62,14 @@ public class MapperEngine implements ItemListener, ComponentListener {
     MapperPlugin plugin;
     boolean mazemode = false;
     boolean reversableDirsMode = false;
+    // window resizes/moves fire many events, so save gui data only once they stop
+    private static final int GUI_SAVE_DELAY_MS = 500;
+    private final Timer guiSaveTimer = new Timer( GUI_SAVE_DELAY_MS, new ActionListener() {
+        @Override
+        public void actionPerformed( ActionEvent e ) {
+            saveWindowGuiData();
+        }
+    } );
 
     public MapperEngine( SparseMultigraph<Room, Exit> graph, MapperPlugin plugin ) {
         this(plugin);
@@ -68,6 +80,7 @@ public class MapperEngine implements ItemListener, ComponentListener {
 
     public MapperEngine(MapperPlugin plugin) {
         this.plugin = plugin;
+        guiSaveTimer.setRepeats( false );
         graph = new SparseMultigraph<Room, Exit>();
         mapperLayout = new MapperLayout( graph );
         mapperLayout.setSize( new Dimension( 500, 500 ) ); //????
@@ -499,14 +512,28 @@ public class MapperEngine implements ItemListener, ComponentListener {
 
     @Override
     public void componentMoved( ComponentEvent e ) {
-        if (this.batWindow != null) {
-            GuiDataPersister.save( this.baseDir, this.batWindow.getLocation(), this.batWindow.getSize() );
-        }
+        guiSaveTimer.restart();
     }
 
 
     @Override
     public void componentResized( ComponentEvent e ) {
+        guiSaveTimer.restart();
+    }
+
+
+    /**
+     * Saves a window move/resize that is still waiting for its timer, so it isn't lost when the client exits.
+     */
+    public void flushGuiData() {
+        if (guiSaveTimer.isRunning()) {
+            guiSaveTimer.stop();
+            saveWindowGuiData();
+        }
+    }
+
+
+    private void saveWindowGuiData() {
         if (this.batWindow != null) {
             GuiDataPersister.save( this.baseDir, this.batWindow.getLocation(), this.batWindow.getSize() );
         }
