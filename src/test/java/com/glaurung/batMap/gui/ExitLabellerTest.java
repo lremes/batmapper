@@ -54,6 +54,16 @@ public class ExitLabellerTest {
     }
 
     @Test
+    public void currentExitKeepsLabelWhenZoomedOut() {
+        zoom( 0.2f );
+        Exit current = new Exit( "climb rope" );
+        current.setCurrentExit( true );
+
+        assertEquals( "climb rope", labeller.transform( current ) );
+        assertNull( labeller.transform( new Exit( "n" ) ) );
+    }
+
+    @Test
     public void labelsReturnWhenZoomingBackIn() {
         zoom( 0.2f );
         assertNull( labeller.transform( new Exit( "n" ) ) );

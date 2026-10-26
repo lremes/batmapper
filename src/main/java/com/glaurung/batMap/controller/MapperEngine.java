@@ -82,7 +82,7 @@ public class MapperEngine implements ItemListener, ComponentListener {
         rc.setEdgeShapeTransformer( new EdgeShape.Wedge<Room, Exit>( 30 ) );
         rc.setEdgeFillPaintTransformer( new ExitPaintTransformer( vv ) );
 
-        rc.setVertexShapeTransformer( new RoomShape( graph ) );
+        rc.setVertexShapeTransformer( new RoomShape() );
         rc.setVertexIconTransformer( new RoomIconTransformer() );
 
         vv.getRenderContext().setLabelOffset( 5 );

@@ -19,7 +19,7 @@ public class RoomIconTransformer implements Transformer<Room, Icon> {
     private final int WIDTH= 90;
     private final int HEIGHT = 90;
     // icons are requested for every visible room on every repaint, so rooms that look the same share one cached icon
-    private static final int MAX_CACHED_ICONS = 1000;
+    private static final int MAX_CACHED_ICONS = 256;
     private static final String[] EXIT_KEYS = { "n", "ne", "e", "se", "s", "sw", "w", "nw", "u", "d", "special" };
 
     private final Map<String, Icon> iconCache = new LinkedHashMap<String, Icon>( 16, 0.75f, true ) {

@@ -11,7 +11,7 @@ import edu.uci.ics.jung.visualization.VisualizationViewer;
 
 /**
  * Labels exits with their name, but hides the labels when the map is zoomed out so far
- * that they would only clutter the map and slow down drawing.
+ * that they would only clutter the map and slow down drawing. The exit just taken keeps its label.
  */
 public class ExitLabeller implements Transformer<Exit, String> {
 
@@ -24,7 +24,7 @@ public class ExitLabeller implements Transformer<Exit, String> {
     }
 
     public String transform( Exit exit ) {
-        if (getScale() < MIN_SCALE_FOR_LABELS) {
+        if (! exit.isCurrentExit() && getScale() < MIN_SCALE_FOR_LABELS) {
             return null;
         }
         return exit.toString();
