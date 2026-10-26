@@ -7,13 +7,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.Collection;
+import java.nio.file.Files;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 
 import com.glaurung.batMap.vo.AreaSaveObject;
 import com.glaurung.batMap.vo.Exit;
@@ -81,9 +78,9 @@ public class AreaDataPersister {
         LinkedList<String> names = new LinkedList<String>();
         if (files != null) {
             for (File file : files) {
-                if (FilenameUtils.getExtension(file.getName()).equals("batmap")) {
-//				System.out.println(FilenameUtils.getBaseName(file.getName()));
-                    names.add(FilenameUtils.getBaseName(file.getName()));
+                String name = file.getName();
+                if (name.endsWith( SUFFIX )) {
+                    names.add( name.substring( 0, name.length() - SUFFIX.length() ) );
                 }
             }
         }
@@ -121,28 +118,32 @@ public class AreaDataPersister {
     }
 
     public static void migrateFilesToNewLocation( String basedir ) {
-        File oldDir = new File( PATH );
         File newDir = new File( basedir, NEW_PATH );
         newDir = new File( newDir, PATH );
+        migrateFiles( new File( PATH ), newDir );
+    }
+
+    static void migrateFiles( File oldDir, File newDir ) {
         if (! oldDir.exists())
             return;
-        Collection<File> oldDirFiles = FileUtils.listFiles( oldDir, null, false );
+        List<File> oldDirFiles = listFiles( oldDir );
 
         try {
             if (oldDirFiles.size() == 0) {
-                FileUtils.deleteDirectory( oldDir );
+                Files.deleteIfExists( oldDir.toPath() );
                 return;
             }
-            FileUtils.forceMkdir( newDir );
+            Files.createDirectories( newDir.toPath() );
             for (File mapfile : oldDirFiles) {
-                if (! FileUtils.directoryContains( newDir, mapfile )) {
-                    FileUtils.moveFileToDirectory( mapfile, newDir, true );
-                } else {
+                // never overwrite a map that already exists in the new location
+                File target = new File( newDir, mapfile.getName() );
+                if (! target.exists()) {
+                    Files.move( mapfile.toPath(), target.toPath() );
                 }
             }
             //all files moved to new place now, can safely delete old directory
-            if (FileUtils.listFiles( oldDir, null, false ).size() == 0) {
-                FileUtils.deleteDirectory( oldDir );
+            if (listFiles( oldDir ).size() == 0) {
+                Files.deleteIfExists( oldDir.toPath() );
             }
 
         } catch (IOException e) {
@@ -150,6 +151,19 @@ public class AreaDataPersister {
         }
 
 
+    }
+
+    private static List<File> listFiles( File dir ) {
+        List<File> result = new LinkedList<File>();
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isFile()) {
+                    result.add( file );
+                }
+            }
+        }
+        return result;
     }
 
 

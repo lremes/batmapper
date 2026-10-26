@@ -4,14 +4,13 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-
-import org.apache.commons.io.IOUtils;
 
 public class ManualPanel extends JPanel implements ComponentListener {
 
@@ -44,9 +43,14 @@ public class ManualPanel extends JPanel implements ComponentListener {
 
     private String readManual() {
 
-        try {
-            InputStream stream = getClass().getResourceAsStream( MANUAL_FILE );
-            return IOUtils.toString( stream );
+        try (InputStream stream = getClass().getResourceAsStream( MANUAL_FILE )) {
+            ByteArrayOutputStream manual = new ByteArrayOutputStream();
+            byte[] buffer = new byte[4096];
+            int read;
+            while (( read = stream.read( buffer ) ) != - 1) {
+                manual.write( buffer, 0, read );
+            }
+            return manual.toString( "UTF-8" );
         } catch (IOException e) {
             e.printStackTrace();
             return null;
