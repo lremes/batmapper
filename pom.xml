@@ -87,10 +87,11 @@
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.3.2</version>
+                <version>3.8.1</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <!-- batclient runs plugins on its bundled java 8 runtime -->
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
 
@@ -158,5 +159,18 @@
 
         </plugins>
     </build>
+
+    <profiles>
+        <!-- newer jdks can check against the real java 8 api, so nothing newer slips into the plugin -->
+        <profile>
+            <id>java8-api</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.release>8</maven.compiler.release>
+            </properties>
+        </profile>
+    </profiles>
 
 </project>
