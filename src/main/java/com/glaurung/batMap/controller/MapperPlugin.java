@@ -81,6 +81,7 @@ public class MapperPlugin extends BatClientPlugin implements BatClientPluginTrig
         clientWin.setVisible( true );
         this.getPluginManager().addProtocolListener( this );
         AreaDataPersister.migrateFilesToNewLocation( BASEDIR );
+        searchEngine.warmUpSearchIndex();
         clientWin.addComponentListener( engine );
 
     }

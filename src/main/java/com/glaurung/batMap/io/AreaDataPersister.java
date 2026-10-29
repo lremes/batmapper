@@ -8,7 +8,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -73,20 +80,63 @@ public class AreaDataPersister {
     }
 
     public static List<String> listAreaNames( String basedir ) {
+        LinkedList<String> names = new LinkedList<String>();
+        for (File file : listAreaFiles( basedir )) {
+            names.add( areaNameOf( file ) );
+        }
+        return names;
+    }
+
+    /**
+     * Area names with the time their map was last saved, so callers can tell which maps changed.
+     */
+    public static Map<String, Long> listAreaSaveTimes( String basedir ) {
+        final Map<String, Long> saveTimes = new LinkedHashMap<String, Long>();
+        Path dir = new File( new File( basedir, NEW_PATH ), PATH ).toPath();
+        if (! Files.isDirectory( dir )) {
+            return saveTimes;
+        }
+        try {
+            // walking gets the file times along with the directory listing on Windows, instead of asking for each file
+            Files.walkFileTree( dir, EnumSet.noneOf( FileVisitOption.class ), 1, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile( Path file, BasicFileAttributes attrs ) {
+                    if (file.getFileName().toString().endsWith( SUFFIX )) {
+                        saveTimes.put( areaNameOf( file.toFile() ), attrs.lastModifiedTime().toMillis() );
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed( Path file, IOException e ) {
+                    return FileVisitResult.CONTINUE;
+                }
+            } );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return saveTimes;
+    }
+
+    private static List<File> listAreaFiles( String basedir ) {
         File newDir = new File( basedir, NEW_PATH );
         newDir = new File( newDir, PATH );
         File folder = newDir;
         File[] files = folder.listFiles();
-        LinkedList<String> names = new LinkedList<String>();
+        LinkedList<File> areaFiles = new LinkedList<File>();
         if (files != null) {
             for (File file : files) {
-                String name = file.getName();
-                if (name.endsWith( SUFFIX )) {
-                    names.add( name.substring( 0, name.length() - SUFFIX.length() ) );
+                if (file.getName().endsWith( SUFFIX )) {
+                    areaFiles.add( file );
                 }
             }
         }
-        return names;
+        return areaFiles;
+    }
+
+    private static String areaNameOf( File areaFile ) {
+        String name = areaFile.getName();
+        return name.substring( 0, name.length() - SUFFIX.length() );
     }
 
     private static AreaSaveObject makeSaveObject( String basedir, SparseMultigraph<Room, Exit> graph, Layout<Room, Exit> layout ) throws IOException {

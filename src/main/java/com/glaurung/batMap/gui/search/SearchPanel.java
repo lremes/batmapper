@@ -4,10 +4,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.io.IOException;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import java.util.Vector;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -20,7 +22,6 @@ import com.glaurung.batMap.controller.SearchEngine;
 import com.glaurung.batMap.gui.MapperPanel;
 import com.glaurung.batMap.io.AreaDataPersister;
 import com.glaurung.batMap.vo.Area;
-import com.glaurung.batMap.vo.AreaSaveObject;
 import com.glaurung.batMap.vo.Room;
 
 public class SearchPanel extends MapperPanel implements ItemListener {
@@ -29,6 +30,7 @@ public class SearchPanel extends MapperPanel implements ItemListener {
 
     private final int ELEMENT_HEIGHT = 25;
     private static final String AREA_LIST_TITLE = "Areas list";
+    public static final int MIN_SEARCH_LENGTH = 3;
     private JTextField searchText = new JTextField();
     private SearchEngine engine;
     private DefaultComboBoxModel model = new DefaultComboBoxModel();
@@ -46,7 +48,7 @@ public class SearchPanel extends MapperPanel implements ItemListener {
         results.addItemListener( this );
         this.setLayout( null );
         this.BORDERLINE = ELEMENT_HEIGHT + 14;
-        searchText.setToolTipText( "Input desc to search here" );
+        searchText.setToolTipText( "Input desc to search here, at least " + MIN_SEARCH_LENGTH + " letters" );
         results.setToolTipText( "Click on a result to see map" );
         save.addActionListener( this );
         areaList.addItemListener( this );
@@ -96,43 +98,32 @@ public class SearchPanel extends MapperPanel implements ItemListener {
         searchText.setText(text);
     }
 
+    /**
+     * Shows rooms whose desc contains the text, and returns them as distinct "area: short desc" lines.
+     */
     public List<String> searchForRoomsWith( String text ) {
-        List<String> foundRooms = new LinkedList<String>();
-
-        model.removeAllElements();
-        model.addElement( new SearchResultItem( new Room( "results", "first slot placeholder", new Area( "Search" ) ) ) );
-        if (text.equals( "" )) {
-            return foundRooms;
-        }
-        //iterate through all areafiles, iterate through all rooms and look for texts, if matches, add to list
-        List<String> areas = AreaDataPersister.listAreaNames( this.engine.getBaseDir() );
-        try {
-            for (String areaName : areas) {
-                AreaSaveObject aso = AreaDataPersister.loadData( this.engine.getBaseDir(), areaName );
-                Collection<Room> areaRooms = aso.getGraph().getVertices();
-                for (Room room : areaRooms) {
-                	if (room.getShortDesc() == null || room.getLongDesc() == null ) {
-                		// in case of bad room data, just skip it
-                		continue;
-                	}
-                	if (room.getLongDesc().toLowerCase().contains( text.toLowerCase() ) ||
-                            room.getShortDesc().toLowerCase().contains( text.toLowerCase() )) {
-                        model.addElement( new SearchResultItem( room ) );
-                        
-                        String roomString = room.getArea().getName() + ": " + room.getShortDesc();
-                        if (!foundRooms.contains(roomString)) {
-                            foundRooms.add(roomString);
-                        }
-                    }
-                }
+        Vector<SearchResultItem> items = new Vector<SearchResultItem>();
+        items.add( new SearchResultItem( new Room( "results", "first slot placeholder", new Area( "Search" ) ) ) );
+        Set<String> foundRooms = new LinkedHashSet<String>();
+        // shorter texts match a big part of all rooms, which isn't useful
+        if (text.trim().length() >= MIN_SEARCH_LENGTH) {
+            for (Room room : engine.searchRooms( text )) {
+                items.add( new SearchResultItem( room ) );
+                foundRooms.add( room.getArea().getName() + ": " + room.getShortDesc() );
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
         }
+        // fill the results in one go, adding them one by one makes the combo box redo its work for each
+        model = new DefaultComboBoxModel( items );
+        results.setModel( model );
+        return new ArrayList<String>( foundRooms );
+    }
 
-        return foundRooms;
+    List<SearchResultItem> listedResults() {
+        List<SearchResultItem> listed = new LinkedList<SearchResultItem>();
+        for (int i = 1; i < model.getSize(); i++) {
+            listed.add( (SearchResultItem) model.getElementAt( i ) );
+        }
+        return listed;
     }
 
     /**

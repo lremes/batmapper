@@ -59,6 +59,8 @@ public class SearchEngineTest {
         MapperLayout layout = new MapperLayout( graph );
         Room first = new Room( "First room of " + name, name + "-1", area );
         Room second = new Room( "Second room of " + name, name + "-2", area );
+        first.setLongDesc( "The first room." );
+        second.setLongDesc( "The second room." );
         graph.addEdge( new Exit( "e" ), first, second, EdgeType.DIRECTED );
         layout.setLocation( first, new Point2D.Double( 0, 0 ) );
         layout.setLocation( second, new Point2D.Double( 120, 0 ) );
@@ -100,6 +102,13 @@ public class SearchEngineTest {
         engine.showArea( "arelium" );
 
         assertTrue( saveButton.isEnabled() );
+    }
+
+    @Test
+    public void searchAfterWarmUpFindsRooms() {
+        engine.warmUpSearchIndex();
+
+        assertEquals( 2, engine.searchRooms( "room of arelium" ).size() );
     }
 
     @Test
