@@ -35,7 +35,7 @@ public class MapperPlugin extends BatClientPlugin implements BatClientPluginTrig
     protected static final String COMMAND_SHOW = "show";
     protected static final String COMMAND_HIDE = "hide";
     protected static final String COMMAND_TOGGLE = "toggle";
-
+    
     private BatWindow mapperWindow;
     private MapperEngine engine;
     private SearchEngine searchEngine;
