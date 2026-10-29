@@ -97,6 +97,7 @@ public class MapperEngine implements ItemListener, ComponentListener {
 
         rc.setVertexShapeTransformer( new RoomShape() );
         rc.setVertexIconTransformer( new RoomIconTransformer() );
+        vv.setRenderer( new ExitLabelsOnTopRenderer() );
 
         vv.getRenderContext().setLabelOffset( 5 );
 
