@@ -1,24 +1,18 @@
 package com.glaurung.batMap.gui.search;
 
-import com.glaurung.batMap.vo.Room;
-
 public class AreaListItem {
-    private Room room;
+    private String areaName;
 
-    public AreaListItem( Room room ) {
-        this.room = room;
+    public AreaListItem( String areaName ) {
+        this.areaName = areaName;
     }
 
-    public Room getRoom() {
-        return room;
-    }
-
-    public void setRoom( Room room ) {
-        this.room = room;
+    public String getAreaName() {
+        return areaName;
     }
 
     @Override
     public String toString() {
-        return this.room.getArea().getName();
+        return this.areaName;
     }
 }

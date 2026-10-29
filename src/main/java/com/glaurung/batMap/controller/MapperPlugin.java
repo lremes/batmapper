@@ -65,6 +65,9 @@ public class MapperPlugin extends BatClientPlugin implements BatClientPluginTrig
 
         engine = new MapperEngine(this);
         searchEngine = new SearchEngine(this);
+        // set before the panels are shown, they need it as soon as they are laid out
+        engine.setBaseDir( BASEDIR );
+        searchEngine.setBaseDir( BASEDIR );
         engine.setBatWindow( clientWin );
         searchEngine.setBatWindow( clientWin );
         clientWin.removeTabAt( 0 );
@@ -78,8 +81,6 @@ public class MapperPlugin extends BatClientPlugin implements BatClientPluginTrig
         clientWin.setVisible( true );
         this.getPluginManager().addProtocolListener( this );
         AreaDataPersister.migrateFilesToNewLocation( BASEDIR );
-        engine.setBaseDir( BASEDIR );
-        searchEngine.setBaseDir( BASEDIR );
         clientWin.addComponentListener( engine );
 
     }

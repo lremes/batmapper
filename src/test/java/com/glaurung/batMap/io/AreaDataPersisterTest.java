@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.awt.geom.Point2D;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -12,11 +13,21 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import com.glaurung.batMap.gui.MapperLayout;
+import com.glaurung.batMap.vo.Area;
+import com.glaurung.batMap.vo.AreaSaveObject;
+import com.glaurung.batMap.vo.Exit;
+import com.glaurung.batMap.vo.Room;
+
+import edu.uci.ics.jung.graph.SparseMultigraph;
+import edu.uci.ics.jung.graph.util.EdgeType;
 
 public class AreaDataPersisterTest {
 
@@ -53,6 +64,34 @@ public class AreaDataPersisterTest {
 
         assertEquals( new HashSet<>( Arrays.asList( "arelium", "the.dotted.area" ) ),
                       new HashSet<>( AreaDataPersister.listAreaNames( temp.getRoot().getPath() ) ) );
+    }
+
+    @Test
+    public void savedAreaLoadsBack() throws Exception {
+        new File( temp.getRoot(), "conf" ).mkdirs(); // the client always has its conf dir
+        Area area = new Area( "trader's house" );
+        SparseMultigraph<Room, Exit> graph = new SparseMultigraph<Room, Exit>();
+        MapperLayout layout = new MapperLayout( graph );
+        Room hall = new Room( "Hall", "hall", area );
+        Room shop = new Room( "Shop", "shop", area );
+        graph.addEdge( new Exit( "n" ), hall, shop, EdgeType.DIRECTED );
+        layout.setLocation( hall, new Point2D.Double( 0, 0 ) );
+        layout.setLocation( shop, new Point2D.Double( 0, -120 ) );
+
+        AreaDataPersister.save( temp.getRoot().getPath(), graph, layout );
+        AreaSaveObject loaded = AreaDataPersister.loadData( temp.getRoot().getPath(), "trader's house" );
+
+        assertEquals( new HashSet<>( Arrays.asList( "traders house" ) ),
+                      new HashSet<>( AreaDataPersister.listAreaNames( temp.getRoot().getPath() ) ) );
+        assertEquals( 2, loaded.getGraph().getVertexCount() );
+        assertEquals( 1, loaded.getGraph().getEdgeCount() );
+        assertEquals( "trader's house", loaded.getGraph().getVertices().iterator().next().getArea().getName() );
+        for (Map.Entry<Room, Point2D> location : loaded.getLocations().entrySet()) {
+            if (location.getKey().getId().equals( "shop" )) {
+                assertEquals( new Point2D.Double( 0, -120 ), location.getValue() );
+            }
+        }
+        assertEquals( 2, loaded.getLocations().size() );
     }
 
     @Test

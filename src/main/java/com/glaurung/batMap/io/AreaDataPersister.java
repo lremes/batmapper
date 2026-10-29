@@ -1,6 +1,7 @@
 package com.glaurung.batMap.io;
 
 import java.awt.geom.Point2D;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -65,7 +66,8 @@ public class AreaDataPersister {
         File dataFile = new File( getFileNameFrom( basedir, areaName ) );
 //		System.out.println("\n\n+ndataFileForLoading\n\n\n"+dataFile);
         try (FileInputStream fileInputStream = new FileInputStream(dataFile);
-             ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
+             // ObjectInputStream reads a few bytes at a time, so buffer it or every read goes to the OS
+             ObjectInputStream objectInputStream = new ObjectInputStream( new BufferedInputStream( fileInputStream ) )) {
             return (AreaSaveObject) objectInputStream.readObject();
         }
     }
