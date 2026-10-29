@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
+import javax.swing.SwingUtilities;
+
 import com.glaurung.batMap.gui.corpses.CorpsePanel;
 import com.glaurung.batMap.gui.manual.ManualPanel;
 import com.glaurung.batMap.gui.search.SearchPanel;
@@ -30,7 +32,11 @@ public class MapperPlugin extends BatClientPlugin implements BatClientPluginTrig
     protected static final String COMMAND_LIST_LABELS = "list";
     protected static final String COMMAND_APPEND_TO_NOTES = "append";
     protected static final String COMMAND_FIND_DESC = "find";
+    protected static final String COMMAND_SHOW = "show";
+    protected static final String COMMAND_HIDE = "hide";
+    protected static final String COMMAND_TOGGLE = "toggle";
     
+    private BatWindow mapperWindow;
     private MapperEngine engine;
     private SearchEngine searchEngine;
     private SearchPanel searchPanel;
@@ -62,6 +68,7 @@ public class MapperPlugin extends BatClientPlugin implements BatClientPluginTrig
         } else {
             clientWin = this.getClientGUI().createBatWindow( "Mapper", 300, 300, 820, 550 );
         }
+        mapperWindow = clientWin;
 
         engine = new MapperEngine(this);
         searchEngine = new SearchEngine(this);
@@ -179,6 +186,8 @@ public class MapperPlugin extends BatClientPlugin implements BatClientPluginTrig
             printConsoleMessage(String.format("\t%s        - to list labels and rooms",COMMAND_LIST_LABELS));
             printConsoleMessage(String.format("\t%s        - to append a line to roomnotes",COMMAND_APPEND_TO_NOTES));
             printConsoleMessage(String.format("\t%s <desc> - to find rooms by long desc",COMMAND_FIND_DESC));
+            printConsoleMessage(String.format("\t%s/%s   - to hide or show the mapper window",COMMAND_HIDE,COMMAND_SHOW));
+            printConsoleMessage(String.format("\t%s      - to hide the mapper window if it's shown, show it otherwise",COMMAND_TOGGLE));
         }
         if(input instanceof String){
             String[] params = ((String)input).split(" ");
@@ -190,6 +199,12 @@ public class MapperPlugin extends BatClientPlugin implements BatClientPluginTrig
                     for(String entry : this.engine.getLabels()){
                         printConsoleMessage(entry);
                     }
+                }else if(command.equalsIgnoreCase(COMMAND_SHOW)){
+                    setWindowVisible( true );
+                }else if(command.equalsIgnoreCase(COMMAND_HIDE)){
+                    setWindowVisible( false );
+                }else if(command.equalsIgnoreCase(COMMAND_TOGGLE)){
+                    setWindowVisible( null );
                 }else{
                     printConsoleError(String.format("unknown command: [%s]", command));
                 }
@@ -244,6 +259,18 @@ public class MapperPlugin extends BatClientPlugin implements BatClientPluginTrig
     private void printConsoleError(String msg){
         this.getClientGUI().printText("general","[Mapper error] "+msg+"\n", "F7856D");
     }
+    /**
+     * Shows or hides the mapper window, or flips it when visible is null. Mapping goes on while it's hidden.
+     */
+    private void setWindowVisible( final Boolean visible ) {
+        if (mapperWindow == null) {
+            printConsoleError( "mapper window isn't open" );
+            return;
+        }
+        // commands don't arrive on the swing thread
+        SwingUtilities.invokeLater( () -> mapperWindow.setVisible( visible != null ? visible : ! mapperWindow.isVisible() ) );
+    }
+
     private void printConsoleMessage(String msg){
         this.getClientGUI().printText("general","[Mapper] "+msg+"\n", "6AFA63");
     }
