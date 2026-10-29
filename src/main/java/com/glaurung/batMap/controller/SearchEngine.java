@@ -3,6 +3,7 @@ package com.glaurung.batMap.controller;
 import java.awt.event.ItemListener;
 import java.io.IOException;
 import java.sql.Savepoint;
+import java.util.List;
 
 import com.glaurung.batMap.gui.search.SearchPanel;
 import com.glaurung.batMap.io.AreaDataPersister;
@@ -17,6 +18,7 @@ public class SearchEngine extends MapperEngine implements ItemListener {
     private String areaName = "";
     private String mapperArea;
     private boolean savingAlreadyDisabled = false;
+    private final SearchIndex searchIndex = new SearchIndex();
 
     public SearchEngine( SparseMultigraph<Room, Exit> graph, MapperPlugin plugin ) {
         this(plugin);
@@ -27,6 +29,24 @@ public class SearchEngine extends MapperEngine implements ItemListener {
     public SearchEngine(MapperPlugin plugin) {
         super(plugin);
         panel = new SearchPanel( this );
+    }
+
+    /**
+     * Rooms in any saved map whose short or long desc contains the text, ignoring case.
+     */
+    public List<Room> searchRooms( String text ) {
+        return searchIndex.search( baseDir, text );
+    }
+
+    /**
+     * Indexes the saved maps in the background, so the first search doesn't have to wait for it.
+     */
+    public void warmUpSearchIndex() {
+        final String dir = baseDir;
+        Thread indexer = new Thread( () -> searchIndex.refresh( dir ), "batMap search index" );
+        indexer.setDaemon( true );
+        indexer.setPriority( Thread.MIN_PRIORITY );
+        indexer.start();
     }
 
     public void moveToRoom( Room room, boolean highlight ) {
