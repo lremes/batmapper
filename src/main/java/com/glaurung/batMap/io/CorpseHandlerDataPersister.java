@@ -1,5 +1,6 @@
 package com.glaurung.batMap.io;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -31,7 +32,8 @@ public class CorpseHandlerDataPersister {
 
     public static CorpseModel load( String basedir ) {
         try (FileInputStream fileInputStream = new FileInputStream( getFile( basedir ) );
-             ObjectInputStream objectInputStream = new ObjectInputStream( fileInputStream )) {
+             // ObjectInputStream reads a few bytes at a time, so buffer it or every read goes to the OS
+             ObjectInputStream objectInputStream = new ObjectInputStream( new BufferedInputStream( fileInputStream ) )) {
             CorpseModel model = (CorpseModel) objectInputStream.readObject();
             return model;
         } catch (IOException e) {

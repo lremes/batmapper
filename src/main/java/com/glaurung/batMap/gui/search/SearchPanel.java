@@ -13,6 +13,8 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JTextField;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 
 import com.glaurung.batMap.controller.SearchEngine;
 import com.glaurung.batMap.gui.MapperPanel;
@@ -26,6 +28,7 @@ public class SearchPanel extends MapperPanel implements ItemListener {
     private static final long serialVersionUID = 1L;
 
     private final int ELEMENT_HEIGHT = 25;
+    private static final String AREA_LIST_TITLE = "Areas list";
     private JTextField searchText = new JTextField();
     private SearchEngine engine;
     private DefaultComboBoxModel model = new DefaultComboBoxModel();
@@ -48,6 +51,19 @@ public class SearchPanel extends MapperPanel implements ItemListener {
         save.addActionListener( this );
         areaList.addItemListener( this );
         areaList.setToolTipText( "Select area from list to view map" );
+        listAllModel.addElement( new AreaListItem( AREA_LIST_TITLE ) );
+        // refresh the list whenever it's opened, so areas mapped meanwhile show up too
+        areaList.addPopupMenuListener( new PopupMenuListener() {
+            public void popupMenuWillBecomeVisible( PopupMenuEvent e ) {
+                populateAreaList();
+            }
+
+            public void popupMenuWillBecomeInvisible( PopupMenuEvent e ) {
+            }
+
+            public void popupMenuCanceled( PopupMenuEvent e ) {
+            }
+        } );
     }
 
 
@@ -62,7 +78,6 @@ public class SearchPanel extends MapperPanel implements ItemListener {
         this.add( results );
         this.add( areaList );
         this.add( save );
-        populateAreaList();
     }
 
     @Override
@@ -120,25 +135,27 @@ public class SearchPanel extends MapperPanel implements ItemListener {
         return foundRooms;
     }
 
-    private void populateAreaList() {
-        listAllModel.removeAllElements();
-        listAllModel.addElement( new AreaListItem( new Room( "Area", "first slot placeholder", new Area( "Areas list" ) ) ) );
+    /**
+     * Lists areas by their map file names, loading every map just for its name made startup slow.
+     */
+    void populateAreaList() {
         List<String> areas = AreaDataPersister.listAreaNames( this.engine.getBaseDir() );
-        try {
-            for (String areaName : areas) {
-                AreaSaveObject aso = AreaDataPersister.loadData( this.engine.getBaseDir(), areaName );
-                Collection<Room> areaRooms = aso.getGraph().getVertices();
-                if (areaRooms.size() > 0) {
-                    listAllModel.addElement( new AreaListItem( areaRooms.iterator().next() ) );
-                }
-
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+        if (areas.equals( listedAreas() )) {
+            return; // unchanged, keep the current selection
         }
+        listAllModel.removeAllElements();
+        listAllModel.addElement( new AreaListItem( AREA_LIST_TITLE ) );
+        for (String areaName : areas) {
+            listAllModel.addElement( new AreaListItem( areaName ) );
+        }
+    }
 
+    List<String> listedAreas() {
+        List<String> listed = new LinkedList<String>();
+        for (int i = 1; i < listAllModel.getSize(); i++) {
+            listed.add( ( (AreaListItem) listAllModel.getElementAt( i ) ).getAreaName() );
+        }
+        return listed;
     }
 
     public void toggleSaveAbility( boolean canSave ) {
@@ -162,7 +179,7 @@ public class SearchPanel extends MapperPanel implements ItemListener {
             }
             AreaListItem item = (AreaListItem) this.listAllModel.getElementAt( this.areaList.getSelectedIndex() );
             if (item != null) {
-                this.engine.moveToRoom( item.getRoom(), false );
+                this.engine.showArea( item.getAreaName() );
             }
         }
 

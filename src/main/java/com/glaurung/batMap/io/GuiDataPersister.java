@@ -2,6 +2,7 @@ package com.glaurung.batMap.io;
 
 import java.awt.Dimension;
 import java.awt.Point;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -31,7 +32,8 @@ public class GuiDataPersister {
 
     public static GuiData load( String basedir ) {
         try (FileInputStream fileInputStream = new FileInputStream( getFile( basedir ) );
-             ObjectInputStream objectInputStream = new ObjectInputStream( fileInputStream )) {
+             // ObjectInputStream reads a few bytes at a time, so buffer it or every read goes to the OS
+             ObjectInputStream objectInputStream = new ObjectInputStream( new BufferedInputStream( fileInputStream ) )) {
             GuiData data = (GuiData) objectInputStream.readObject();
             return data;
         } catch (IOException e) {

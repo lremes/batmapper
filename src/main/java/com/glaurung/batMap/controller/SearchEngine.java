@@ -31,7 +31,19 @@ public class SearchEngine extends MapperEngine implements ItemListener {
 
     public void moveToRoom( Room room, boolean highlight ) {
         moveToArea( room.getArea().getName() );
+        showRoom( room, highlight );
+    }
 
+    /**
+     * Shows an area picked from the area list, with the descs of its first room.
+     */
+    public void showArea( String areaName ) {
+        if (loadArea( areaName ) && graph.getVertexCount() > 0) {
+            showRoom( graph.getVertices().iterator().next(), false );
+        }
+    }
+
+    private void showRoom( Room room, boolean highlight ) {
         for (Room aRoom : graph.getVertices()) {
 
             if (aRoom.equals( room ) && highlight) {
@@ -67,22 +79,28 @@ public class SearchEngine extends MapperEngine implements ItemListener {
     }
 
     public void moveToArea( String areaName ) {
+        loadArea( areaName );
+    }
+
+    private boolean loadArea( String areaName ) {
         AreaSaveObject areaSaveObject = null;
         try {
             areaSaveObject = AreaDataPersister.loadData( baseDir, areaName );
         } catch (ClassNotFoundException e) {
-            return;
+            return false;
         } catch (IOException e) {
-            return;
+            return false;
         }
-        this.areaName = areaName;
         this.graph = areaSaveObject.getGraph();
         this.area = this.graph.getVertices().iterator().next().getArea();
+        // take the name stored in the map, file names (and so the area list) drop ' and / from it
+        this.areaName = this.area.getName();
         mapperLayout.displayLoadedData( areaSaveObject );
         if (! this.areaName.equalsIgnoreCase( this.mapperArea )) {
             savingAlreadyDisabled = false;
         }
         checkIfCanSaveMap();
+        return true;
     }
 
 
